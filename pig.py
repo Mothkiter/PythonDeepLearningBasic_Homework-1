@@ -9,7 +9,7 @@ import json
 
 
 class Pig_MA:
-    def __init__(self, year, month):
+    def __init__(self, month = 1,year =2022):
         self.year = int(year)
         self.month = int(month)
         if  month<= 12 and month>=10:
@@ -19,26 +19,27 @@ class Pig_MA:
         else:
             raise ValueError("请输入一个真正的月份")  
         response_MA = requests.get(self.url_MA)
-        self.bs_MA = BeautifulSoup(response_MA.content,'features="lxml"')
+        self.bs_MA = BeautifulSoup(response_MA.content,"lxml")
         
-    def printInfo_MA(self):
+    def Info_MA(self):
         i = -1
-        n = 1
+        l_name = []
+        l_num = []
+        l_1 = []
+        l_2 = []
         for table in self.bs_MA.select('table.data_table_mobile.pcNone'):
             for td in table.select('td.right_data'):
                 i = i+1
-                if i %5==0:
-                    print( n,end='. ')
-                    n = n+1
                 if i %5==1:
-                    print( td.text.strip(),end=':')
+                    l_name.append(td.text.strip())
                 if i %5==2:
-                    print( td.text.strip(),end='[数值] ')
+                    l_num.append( td.text.strip())
                 if i %5==3:
-                    print( td.text.strip(),end='[环比] ')
+                    l_1.append( td.text.strip())
                 if i %5==4:
-                    print( td.text.strip(),end='[同比] \n')
-        
+                    l_2.append( td.text.strip())
+
+        return({'名称':l_name,'数值':l_num,'环比':l_1,'同比':l_2})        
 
     
 
@@ -58,17 +59,15 @@ class Pig_ZW:
         node = self.bs_ZW.find("ul", class_="zhujia-hd clear")
         name = node.select('img')
         data = node.select('b',class_ = "green")
-        output = []
+        l_name = []
+        l_num = []
         for i in range(len(data)-1):
-            print(name[i].get('alt'),end=':')
-            print(data[i].contents[0])
-            output.append( name[i].get('alt')+':'+str(data[i].contents[0]))
+            l_name.append(name[i].get('alt'))
+            l_num.append(str(data[i].contents[0]))
 
-        print('猪粮比',end=':')
-        print(data[len(data)-1].contents[0])
-        output.append( '猪粮比'+':'+str(data[len(data)-1].contents[0]))
-
-        return(output)
+        l_name.append('猪粮比')
+        l_num.append(data[len(data)-1].contents[0])
+        return({'name':l_name,'num':l_num})
 
 
     def countryInfo(self):
@@ -76,15 +75,17 @@ class Pig_ZW:
         name = node.select('li')
 
         data = node.select('p')
-        output = []
+        l_time = []
+        l_name = []
+        l_num = []
 
         for n in range(len(name)):
-            print(data[3*n].contents[0])
-            print(data[3*n+1].contents[0],end=':')
-            print(data[3*n+2].text.strip())
-            output.append( str(data[3*n].contents[0])+' '+str(data[3*n+1].contents[0])+':'+data[3*n+2].text.strip())
+            l_time.append(data[3*n].contents[0])
+            l_name.append(data[3*n+1].contents[0])
+            l_num.append(data[3*n+2].text.strip())
+            
 
-        return(output)
+        return({'time':l_time,'name':l_name,'num':l_num})
 
 
 
