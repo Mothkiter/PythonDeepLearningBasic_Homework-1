@@ -135,3 +135,28 @@ class Pig_critic:
         return({'猪价(元/公斤)':num[3*(self.day-1)].select('span')[0].contents[0],'玉米(元/吨)':num[3*(self.day-1)+1].select('span')[0].contents[0],'猪粮比':num[3*(self.day-1)+2].select('span')[0].contents[0],'评论':text[self.day-1].text})
 
 
+
+class Pig_change:
+    def __init__(self,id = 1, t=7):
+        if id in [1,3,4] and t in [7,30,180,365]:
+            url = 'https://hqb.nxin.com/hqb/chq.shtml?type=0&date=0&queryPriceVo.goodsId='+str(id)+'&queryPriceVo.areaId=10393&queryPriceVo.whatTime='+str(t)
+        else:
+            raise ValueError("对应关系如下；猪肉 id = 1；玉米 id = 3； 豆粕 id = 4。时间t只能取7 30 180 365")  
+        
+        response_change = requests.get(url)
+        self.bs_change = BeautifulSoup(response_change.content,"lxml")
+
+    def changeInfo(self):
+        dict_obj = json.loads(self.bs_change.p.text.encode('utf-8-sig'))
+
+        l_name = dict_obj['pig'][0]['date']
+        l_num = []
+
+        for i in range(0,len(dict_obj['pig'][0]['date'])):
+            if type(dict_obj['pig'][0]['data'][i])==dict:
+                l_num.append(dict_obj['pig'][0]['data'][i]['y'])
+            else:       
+                l_num.append(dict_obj['pig'][0]['data'][i])
+
+        return({'name':l_name,'num':l_num})
+
