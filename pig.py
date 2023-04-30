@@ -6,10 +6,13 @@ import tkinter as tk
 import requests
 from bs4 import BeautifulSoup
 import json
+from PIL import Image, ImageTk
 
 
 
-def get_pig_info_1( year=2022, month=1): #农业部数据
+
+
+def get_pig_info_1( year=2022, month=1): #data form agriculture minister
     year = int(year)
     month = int(month)
     if month <= 12 and month >= 10:
@@ -43,7 +46,7 @@ def get_pig_info_1( year=2022, month=1): #农业部数据
     
 
 
-def get_pig_info_2(area='全国'): #猪价网数据
+def get_pig_info_2(area='全国'): #datd form a web about pork price
     area = str(area)
     dict = {'全国':'','安徽':'/areapriceinfo-340000.shtml','合肥':'/areapriceinfo-340100.shtml',
             '瑶海区':'/areapriceinfo-340102.shtml','庐阳区':'/areapriceinfo-340103.shtml','蜀山区':'/areapriceinfo-340104.shtml',
@@ -95,7 +98,7 @@ def get_pig_info_2(area='全国'): #猪价网数据
 
 
 
-def get_pig_crtic(year, month, day): #获得猪价评论
+def get_pig_crtic(year, month, day): #get critic about price
     day = int(day)
     if int(month) < 1 or int(month) > 12:
         raise ValueError("请输入一个真正的月份")
@@ -137,27 +140,47 @@ def get_pig_crtic(year, month, day): #获得猪价评论
     }
 
 
+
+
 def get_pig_info_change(id=1, t=7): #获得猪肉以及饲料价格走势图
-    if int(id) in [1,3,4] and int(t) in [7,30,180,365]:
-        url = 'https://hqb.nxin.com/hqb/chq.shtml?type=0&date=0&queryPriceVo.goodsId='+str(id)+'&queryPriceVo.areaId=10393&queryPriceVo.whatTime='+str(t)
+    if int(id) in [1,3,4] :
+        url = 'https://hqb.nxin.com/hqb/chq.shtml?type=0&date=0&queryPriceVo.goodsId='+str(id)+'&queryPriceVo.areaId=10393&queryPriceVo.whatTime='+str(365)
     else:
-        raise ValueError("对应关系如下；猪肉 id = 1；玉米 id = 3； 豆粕 id = 4。时间t只能取7 30 180 365")  
+        raise ValueError("对应关系如下；猪肉 id = 1；玉米 id = 3； 豆粕 id = 4。时间t范围直到去年年初")  
     
+    t = int(t)
+
     response_change = requests.get(url)
     bs_change = BeautifulSoup(response_change.content,"lxml")
 
     dict_obj = json.loads(bs_change.p.text.encode('utf-8-sig'))
 
-    l_name = dict_obj['pig'][0]['date']
     l_num = []
+    l_name = []
+    
+    num = len(dict_obj['pig'][0]['data1'])
+    if t<=num:
+        l_name = dict_obj['pig'][0]['date'][num-t:num]
+        for i in range(num-t,num):
+            if type(dict_obj['pig'][0]['data1'][i])==dict:
+                l_num.append(dict_obj['pig'][0]['data1'][i]['y'])
+            else:       
+                l_num.append(dict_obj['pig'][0]['data1'][i])
 
-    for i in range(0,len(dict_obj['pig'][0]['date'])):
-        if type(dict_obj['pig'][0]['data'][i])==dict:
-            l_num.append(dict_obj['pig'][0]['data'][i]['y'])
-        else:       
-            l_num.append(dict_obj['pig'][0]['data'][i])
+    else:
+        l_name = dict_obj['pig'][0]['date'][num+365-t:365]+dict_obj['pig'][0]['date'][0:num]
+        for i in range(num+365-t,365):
+            if type(dict_obj['pig'][0]['data2'][i])==dict:
+                l_num.append(dict_obj['pig'][0]['data2'][i]['y'])
+            else:       
+                l_num.append(dict_obj['pig'][0]['data2'][i])
+        for i in range(0,num):
+            if type(dict_obj['pig'][0]['data1'][i])==dict:
+                l_num.append(dict_obj['pig'][0]['data1'][i]['y'])
+            else:       
+                l_num.append(dict_obj['pig'][0]['data1'][i])
 
-    return {'name':l_name,'num':l_num}
+    return {'name':l_name,'num':l_num,'id':id,'t':t}
 
 
 
@@ -166,54 +189,58 @@ def get_pig_info_change(id=1, t=7): #获得猪肉以及饲料价格走势图
 # 运行应用程序
 class MyApp_main:
     def __init__(self):
-        self.app = tk.Tk()
+        self.app = tk.Tk()#create the beginning page
 
-        # create button
-        self.button1 = tk.Button(self.app, text='1', command=lambda: self.set_value(1))
-        self.button2 = tk.Button(self.app, text='2', command=lambda: self.set_value(2))
-        self.button3 = tk.Button(self.app, text='3', command=lambda: self.set_value(3))
-        self.button4 = tk.Button(self.app, text='4', command=lambda: self.set_value(4))
+        self.title = tk.Label(self.app, text='( ￣(00)￣ ) 哼~', font=('Arial', 20))
+        self.title.pack(fill='both', expand=True, padx=50, pady=50)
 
-        # show button
+        # create 4 button for 4 kinds of data
+        self.button1 = tk.Button(self.app, text='查询农业部数据', command=lambda: self.show_data(1))
+        self.button2 = tk.Button(self.app, text='查询全国，安徽或者合肥各地区数据', command=lambda: self.show_data(2))
+        self.button3 = tk.Button(self.app, text='查看猪价评论', command=lambda: self.show_data(3))
+        self.button4 = tk.Button(self.app, text='获得价格走势图', command=lambda: self.show_data(4))
+
+
         self.button1.pack(fill='both', expand=True, padx=50, pady=50)
         self.button2.pack(fill='both', expand=True, padx=50, pady=50)
         self.button3.pack(fill='both', expand=True, padx=50, pady=50)
         self.button4.pack(fill='both', expand=True, padx=50, pady=50)
 
-        self.i = 0
+        self.i = 0 #show the kind of data
         self.dict = {}
-        self.dict2 = {}
+        self.dict2 = {}#avaliable when show the second kinds of data
         
 
-    # 创建一个函数，用于设置元素i的值
-    def set_value(self, value):
+    def show_data(self, value): #creat a new page and show tha data
         self.i = value
         if self.i==1: 
             input_str = simpledialog.askstring('Input','输入：年份,月份')
   
-            if input_str:
-                
+            if input_str:  #the data can be dievided by ',' or ' '                
                 input_list = input_str.split(',')
+                if len(input_list) == 1:
+                    input_list = l=input_list[0].split(' ')
                
             self.dict = get_pig_info_1(*input_list)
 
         elif self.i==2: 
             input_str = simpledialog.askstring('Input','请输入:以下选项之一：全国，安徽，合肥或者合肥各下属区以及巢湖市')
   
-            if input_str:
-                
+            if input_str:               
                 input_list = input_str.split(',')
+                if len(input_list) == 1:
+                    input_list = l=input_list[0].split(' ')
+                
                
             self.dict,self.dict2 = get_pig_info_2(*input_list)
 
         elif self.i==3: 
             input_str = simpledialog.askstring('Input','输入：年份,月份,日')
 
-            if input_str:
-                
+            if input_str:              
                 input_list = input_str.split(',')
                 if len(input_list) == 1:
-                    input_list = l=input_list[0].split('，')
+                    input_list = l=input_list[0].split(' ')
 
                 
             self.dict = get_pig_crtic(*input_list)
@@ -221,12 +248,12 @@ class MyApp_main:
         
 
         else :
-            input_str = simpledialog.askstring('Input','输入：id,时间尺度；对应关系如下；猪肉 id = 1；玉米 id = 3； 豆粕 id = 4。时间t只能取7 30 180 365')
+            input_str = simpledialog.askstring('Input','输入：id,时间尺度；对应关系如下；猪肉 id = 1；玉米 id = 3； 豆粕 id = 4。时间只到去年年初')
 
-            if input_str:
+            if input_str:   
                 input_list = input_str.split(',')
                 if len(input_list) == 1:
-                    input_list = l=input_list[0].split('，')
+                    input_list = l=input_list[0].split(' ')
 
                 
             self.dict = get_pig_info_change(*input_list)
@@ -235,20 +262,26 @@ class MyApp_main:
         new_window = tk.Toplevel()
 
         # create a table with dict
-        if self.i ==3:
-
+        if self.i ==1:
             for key in self.dict:
                 name = key
                 break
 
-            text_label = tk.Label(new_window, text=self.dict[name])
-
-            # # display the label on the page
-            text_label.pack()
-
-
-        elif self.i == 2:
+            row_text = ''
             for key in self.dict:
+                row_text += key + ' '
+                tk.Label(new_window, text=key).grid(row=0, column=list(self.dict.keys()).index(key))
+
+            for n in range(len(self.dict[name])):
+                row_text = ''
+                for key in self.dict:
+                    row_text += str(self.dict[key][n]) + ' '
+                    tk.Label(new_window, text=str(self.dict[key][n])).grid(row=n+1, column=list(self.dict.keys()).index(key))
+
+        
+        # create a table with dict
+        if self.i == 2:
+            for key in self.dict:#get a key to get a list in the dict, in order to know the length of list
                 name = key
                 break
 
@@ -280,39 +313,85 @@ class MyApp_main:
                     row_text += str(self.dict2[key][n]) + '  '
                     tk.Label(new_window, text=str(self.dict2[key][n])).grid(row=len(self.dict[name])+n+4, column=list(self.dict2.keys()).index(key))
 
-        else:
+        # show the critic
+        if self.i ==3:
+
             for key in self.dict:
                 name = key
                 break
 
-            row_text = ''
-            for key in self.dict:
-                row_text += key + ' '
-                tk.Label(new_window, text=key).grid(row=0, column=list(self.dict.keys()).index(key))
+            text_label = tk.Label(new_window, text=self.dict[name])
+            text_label.pack()
 
-            for n in range(len(self.dict[name])):
-                row_text = ''
-                for key in self.dict:
-                    row_text += str(self.dict[key][n]) + ' '
-                    tk.Label(new_window, text=str(self.dict[key][n])).grid(row=n+1, column=list(self.dict.keys()).index(key))
 
-        # for n in range(len(self.dict[name])):
-        #     row_text = ''
-        #     for key in self.dict:
-        #         row_text += str(self.dict[key][n]) + ' '
-        #         tk.Label(new_window, text=str(self.dict[key][n])).grid(row=n, column=list(self.dict.keys()).index(key))
-        # if self.i == 4:
-        #     key =list(self.dict.keys())
-        #     fig, ax = plt.subplots()
-        #     ax.plot(self.dict[key[0]], self.dict[key[1]])
-        #     ax.set_xlabel(key[0])
-        #     ax.set_ylabel(key[1])
-        #     ax.set_title('Plot of {} vs {}'.format(key[0], key[1]))
+        if self.i == 4: #draw a pic to show the change of price
 
-        #     # display the plot on the page
-        #     canvas = FigureCanvasTkAgg(fig, master=new_window)
-        #     canvas.draw()
-        #     canvas.get_tk_widget().pack()
+            canvas = tk.Canvas(new_window, width=1020, height=520)
+            canvas.pack()
+
+            data = self.dict['num']
+            day = self.dict['name']
+
+
+            #set name and unit
+            if int(self.dict['id']) == 1:
+                unit = '元/公斤'
+                name = '猪肉'
+            elif int(self.dict['id']) == 3:
+                unit = '元/吨'
+                name = '玉米'
+            else:
+                unit = '元/吨'
+                name = '豆粕'
+
+
+
+            max_value = max(data)
+            min_value = min(data)
+
+            x_scale = 950 / len(data)
+            y_scale = 450 / (max_value - min_value)
+
+            points = []
+
+            if int(self.dict['t'])<15:#if less than 20 data every point will be shown
+
+                for i in range(len(data)):
+                    x = i * x_scale + 25
+                    y = (max_value - data[i]) * y_scale + 45
+                    points.append((x, y))
+                    canvas.create_text(x, y+1, text='*',fill='red')
+                    canvas.create_text(x+10, y-15, text=str(data[i]))
+                    canvas.create_text(x, 510, text=day[i])                    
+                    
+
+                for i in range(len(points) - 1):
+                    canvas.create_line(points[i], points[i+1])
+
+                
+            else:#if more than 20 data every point will be shown
+                n = int(len(data)/15)
+                for i in range(len(data)):
+                    x = i * x_scale + 25
+                    y = (max_value - data[i]) * y_scale + 45
+                    points.append((x, y))
+                    if i%n==0:
+                        canvas.create_text(x, y+1, text='*',fill='red')
+                        canvas.create_text(x+10, y-15, text=str(data[i]))
+                        canvas.create_text(x, 510, text=day[i],font=('Arial', 8))
+
+
+                for i in range(len(points) - 1):
+                    canvas.create_line(points[i], points[i+1])
+                    
+
+            canvas.create_text(500, 10, text=name+'价格走势图(单位：'+unit+')')
+            canvas.create_text(750, 20, text='最大值：'+str(max_value),font=('Arial', 15))
+            canvas.create_text(750, 40, text='最小值：'+str(min_value),font=('Arial', 15))
+
+            canvas.create_line(25, 25, 25, 500, width=2)  # y-axis
+            canvas.create_line(25, 500, 1000, 500, width=2)  # x-axis
+
 
 
 
@@ -320,5 +399,8 @@ class MyApp_main:
     def run(self):
         self.app.mainloop()
         return(self.i,self.dict)
+
+
+
 
 
