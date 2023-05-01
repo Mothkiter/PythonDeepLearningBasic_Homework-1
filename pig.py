@@ -1,4 +1,3 @@
-# Define a class named Pig
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tkinter import simpledialog
@@ -72,7 +71,7 @@ def get_pig_info_2(area='全国'): #datd form a web about pork price
 
         l_name.append('猪粮比')
         l_num.append(data[len(data)-1].contents[0])
-        return({'name':l_name,'num':l_num})
+        return({'项目':l_name,'数据':l_num})
 
 
     def info_2():
@@ -89,7 +88,7 @@ def get_pig_info_2(area='全国'): #datd form a web about pork price
             l_name.append(data[3*n+1].contents[0])
             l_num.append(data[3*n+2].text.strip())
 
-        return({'time':l_time,'name':l_name,'num':l_num})
+        return({'日期':l_time,'项目':l_name,'数据':l_num})
 
     return info_1(),info_2()
 
@@ -191,214 +190,180 @@ class MyApp_main:
     def __init__(self):
         self.app = tk.Tk()#create the beginning page
 
+        #set title
         self.title = tk.Label(self.app, text='( ￣(00)￣ ) 哼~', font=('Arial', 20))
         self.title.pack(fill='both', expand=True, padx=50, pady=50)
 
         # create 4 button for 4 kinds of data
-        self.button1 = tk.Button(self.app, text='查询农业部数据', command=lambda: self.show_data(1))
-        self.button2 = tk.Button(self.app, text='查询全国，安徽或者合肥各地区数据', command=lambda: self.show_data(2))
-        self.button3 = tk.Button(self.app, text='查看猪价评论', command=lambda: self.show_data(3))
-        self.button4 = tk.Button(self.app, text='获得价格走势图', command=lambda: self.show_data(4))
-
+        self.button1 = tk.Button(self.app, text='查询农业部数据', command=lambda: self.show_data_1())
+        self.button2 = tk.Button(self.app, text='查询全国，安徽或者合肥各地区今日数据', command=lambda: self.show_data_2())
+        self.button3 = tk.Button(self.app, text='查看猪价评论', command=lambda: self.show_data_3())
+        self.button4 = tk.Button(self.app, text='获得价格走势图', command=lambda: self.show_data_4())
 
         self.button1.pack(fill='both', expand=True, padx=50, pady=50)
         self.button2.pack(fill='both', expand=True, padx=50, pady=50)
         self.button3.pack(fill='both', expand=True, padx=50, pady=50)
         self.button4.pack(fill='both', expand=True, padx=50, pady=50)
 
-        self.i = 0 #show the kind of data
         self.dict = {}
         self.dict2 = {}#avaliable when show the second kinds of data
         
 
-    def show_data(self, value): #creat a new page and show tha data
-        self.i = value
-        if self.i==1: 
-            input_str = simpledialog.askstring('Input','输入：年份,月份')
-  
-            if input_str:  #the data can be dievided by ',' or ' '                
-                input_list = input_str.split(',')
-                if len(input_list) == 1:
-                    input_list = l=input_list[0].split(' ')
-               
+    def show_data_1(self):
+        #get input
+        input_str = simpledialog.askstring('Input','输入：年份,月份')
+        if input_str:
+            input_list = input_str.split(',')
+            if len(input_list) == 1:
+                input_list = l=input_list[0].split(' ')
             self.dict = get_pig_info_1(*input_list)
+        new_window = tk.Toplevel()
+        # create a table with dict
+        for key in self.dict:
+            name = key
+            break
+        row_text = ''
+        for key in self.dict:
+            row_text += key + ' '
+            tk.Label(new_window, text=key).grid(row=0, column=list(self.dict.keys()).index(key))
+        for n in range(len(self.dict[name])):
+            row_text = ''
+            for key in self.dict:
+                row_text += str(self.dict[key][n]) + ' '
+                tk.Label(new_window, text=str(self.dict[key][n])).grid(row=n+1, column=list(self.dict.keys()).index(key))
 
-        elif self.i==2: 
-            input_str = simpledialog.askstring('Input','请输入:以下选项之一：全国，安徽，合肥或者合肥各下属区以及巢湖市')
-  
-            if input_str:               
-                input_list = input_str.split(',')
-                if len(input_list) == 1:
-                    input_list = l=input_list[0].split(' ')
-                
-               
+        self.dict = {}
+
+
+    def show_data_2(self):
+        input_str = simpledialog.askstring('Input','请输入:以下选项之一：全国，安徽，合肥或者合肥各下属区以及巢湖市')
+        if input_str:
+            input_list = input_str.split(',')
+            if len(input_list) == 1:
+                input_list = l=input_list[0].split(' ')
             self.dict,self.dict2 = get_pig_info_2(*input_list)
-
-        elif self.i==3: 
-            input_str = simpledialog.askstring('Input','输入：年份,月份,日')
-
-            if input_str:              
-                input_list = input_str.split(',')
-                if len(input_list) == 1:
-                    input_list = l=input_list[0].split(' ')
-
-                
-            self.dict = get_pig_crtic(*input_list)
-        
-        
-
-        else :
-            input_str = simpledialog.askstring('Input','输入：id,时间尺度；对应关系如下；猪肉 id = 1；玉米 id = 3； 豆粕 id = 4。时间只到去年年初')
-
-            if input_str:   
-                input_list = input_str.split(',')
-                if len(input_list) == 1:
-                    input_list = l=input_list[0].split(' ')
-
-                
-            self.dict = get_pig_info_change(*input_list)
-
-        
         new_window = tk.Toplevel()
 
         # create a table with dict
-        if self.i ==1:
-            for key in self.dict:
-                name = key
-                break
-
+        for key in self.dict:
+            name = key
+            break
+        row_text = ''
+        for key in self.dict:
+            row_text += key + ' '
+            tk.Label(new_window, text=key).grid(row=0, column=list(self.dict.keys()).index(key))
+        for n in range(len(self.dict[name])):
             row_text = ''
             for key in self.dict:
-                row_text += key + ' '
-                tk.Label(new_window, text=key).grid(row=0, column=list(self.dict.keys()).index(key))
+                row_text += str(self.dict[key][n]) + '  '
+                tk.Label(new_window, text=str(self.dict[key][n])).grid(row=n+1, column=list(self.dict.keys()).index(key))
+        tk.Label(new_window, text='').grid(row=len(self.dict[name])+1, column=0)
 
-            for n in range(len(self.dict[name])):
-                row_text = ''
-                for key in self.dict:
-                    row_text += str(self.dict[key][n]) + ' '
-                    tk.Label(new_window, text=str(self.dict[key][n])).grid(row=n+1, column=list(self.dict.keys()).index(key))
-
-        
-        # create a table with dict
-        if self.i == 2:
-            for key in self.dict:#get a key to get a list in the dict, in order to know the length of list
-                name = key
-                break
-
-            row_text = ''
-            for key in self.dict:
-                row_text += key + ' '
-                tk.Label(new_window, text=key).grid(row=0, column=list(self.dict.keys()).index(key))
-
-            for n in range(len(self.dict[name])):
-                row_text = ''
-                for key in self.dict:
-                    row_text += str(self.dict[key][n]) + '  '
-                    tk.Label(new_window, text=str(self.dict[key][n])).grid(row=n+1, column=list(self.dict.keys()).index(key))
-
-            tk.Label(new_window, text='').grid(row=len(self.dict[name])+1, column=0)
-
-            for key in self.dict2:
-                name2 = key
-                break
-
+        # create a table with dict2
+        for key in self.dict2:
+            name2 = key
+            break
+        row_text = ''
+        for key in self.dict2:
+            row_text += key + ' '
+            tk.Label(new_window, text=key).grid(row=len(self.dict[name])+3, column=list(self.dict2.keys()).index(key))
+        for n in range(len(self.dict2[name2])):
             row_text = ''
             for key in self.dict2:
-                row_text += key + ' '
-                tk.Label(new_window, text=key).grid(row=len(self.dict[name])+3, column=list(self.dict2.keys()).index(key))
+                row_text += str(self.dict2[key][n]) + '  '
+                tk.Label(new_window, text=str(self.dict2[key][n])).grid(row=len(self.dict[name])+n+4, column=list(self.dict2.keys()).index(key))
 
-            for n in range(len(self.dict2[name2])):
-                row_text = ''
-                for key in self.dict2:
-                    row_text += str(self.dict2[key][n]) + '  '
-                    tk.Label(new_window, text=str(self.dict2[key][n])).grid(row=len(self.dict[name])+n+4, column=list(self.dict2.keys()).index(key))
+        self.dict = {}
+        self.dict2 = {}
 
+
+
+    def show_data_3(self):
+        input_str = simpledialog.askstring('Input','输入：年份,月份,日')
+        if input_str:
+            input_list = input_str.split(',')
+            if len(input_list) == 1:
+                input_list = l=input_list[0].split(' ')
+            self.dict = get_pig_crtic(*input_list)
+        new_window = tk.Toplevel()
         # show the critic
-        if self.i ==3:
+        for key in self.dict:
+            name = key
+            break
+        text_label = tk.Label(new_window, text=self.dict[name])
+        text_label.pack()
 
-            for key in self.dict:
-                name = key
-                break
-
-            text_label = tk.Label(new_window, text=self.dict[name])
-            text_label.pack()
-
-
-        if self.i == 4: #draw a pic to show the change of price
-
-            canvas = tk.Canvas(new_window, width=1020, height=520)
-            canvas.pack()
-
-            data = self.dict['num']
-            day = self.dict['name']
+        self.dict = {}
 
 
-            #set name and unit
-            if int(self.dict['id']) == 1:
-                unit = '元/公斤'
-                name = '猪肉'
-            elif int(self.dict['id']) == 3:
-                unit = '元/吨'
-                name = '玉米'
-            else:
-                unit = '元/吨'
-                name = '豆粕'
+    def show_data_4(self):
+        input_str = simpledialog.askstring('Input','输入：id,时间尺度(天)；对应关系如下；猪肉 id = 1；玉米 id = 3； 豆粕 id = 4。时间只到去年年初')
+        if input_str:
+            input_list = input_str.split(',')
+            if len(input_list) == 1:
+                input_list = l=input_list[0].split(' ')
+            self.dict = get_pig_info_change(*input_list)
+        new_window = tk.Toplevel()
+        # draw a pic to show the change of price
+        canvas = tk.Canvas(new_window, width=1020, height=520)
+        canvas.pack()
+        data = self.dict['num']
+        day = self.dict['name']
+        #set name and unit
+        if int(self.dict['id']) == 1:
+            unit = '元/公斤'
+            name = '猪肉'
+        elif int(self.dict['id']) == 3:
+            unit = '元/吨'
+            name = '玉米'
+        else:
+            unit = '元/吨'
+            name = '豆粕'
+        
+        max_value = max(data)
+        min_value = min(data)
+        x_scale = 950 / len(data)
+        y_scale = 450 / (max_value - min_value)
 
-
-
-            max_value = max(data)
-            min_value = min(data)
-
-            x_scale = 950 / len(data)
-            y_scale = 450 / (max_value - min_value)
-
-            points = []
-
-            if int(self.dict['t'])<15:#if less than 20 data every point will be shown
-
-                for i in range(len(data)):
-                    x = i * x_scale + 25
-                    y = (max_value - data[i]) * y_scale + 45
-                    points.append((x, y))
+        points = []
+        if int(self.dict['t'])<15:#if less than 30 data every point will be shown
+            for i in range(len(data)):
+                x = i * x_scale + 25
+                y = (max_value - data[i]) * y_scale + 45
+                points.append((x, y))
+                canvas.create_text(x, y+1, text='*',fill='red')
+                canvas.create_text(x+10, y-15, text=str(data[i]))
+                canvas.create_text(x, 510, text=day[i])                    
+            for i in range(len(points) - 1):
+                canvas.create_line(points[i], points[i+1])
+        else:#if more than 20 data every point will be shown
+            n = int(len(data)/15)
+            for i in range(len(data)):
+                x = i * x_scale + 25
+                y = (max_value - data[i]) * y_scale + 45
+                points.append((x, y))
+                if i%n==0:
                     canvas.create_text(x, y+1, text='*',fill='red')
                     canvas.create_text(x+10, y-15, text=str(data[i]))
-                    canvas.create_text(x, 510, text=day[i])                    
-                    
+                    canvas.create_text(x, 510, text=day[i],font=('Arial', 8))
+            for i in range(len(points) - 1):
+                canvas.create_line(points[i], points[i+1])
 
-                for i in range(len(points) - 1):
-                    canvas.create_line(points[i], points[i+1])
+        canvas.create_text(500, 10, text=name+'价格走势图(单位：'+unit+')')
+        canvas.create_text(750, 20, text='最大值：'+str(max_value),font=('Arial', 15))
+        canvas.create_text(750, 40, text='最小值：'+str(min_value),font=('Arial', 15))
 
-                
-            else:#if more than 20 data every point will be shown
-                n = int(len(data)/15)
-                for i in range(len(data)):
-                    x = i * x_scale + 25
-                    y = (max_value - data[i]) * y_scale + 45
-                    points.append((x, y))
-                    if i%n==0:
-                        canvas.create_text(x, y+1, text='*',fill='red')
-                        canvas.create_text(x+10, y-15, text=str(data[i]))
-                        canvas.create_text(x, 510, text=day[i],font=('Arial', 8))
+        canvas.create_line(25, 25, 25, 500, width=2)  # y-axis
+        canvas.create_line(25, 500, 1000, 500, width=2)  # x-axis
 
-
-                for i in range(len(points) - 1):
-                    canvas.create_line(points[i], points[i+1])
-                    
-
-            canvas.create_text(500, 10, text=name+'价格走势图(单位：'+unit+')')
-            canvas.create_text(750, 20, text='最大值：'+str(max_value),font=('Arial', 15))
-            canvas.create_text(750, 40, text='最小值：'+str(min_value),font=('Arial', 15))
-
-            canvas.create_line(25, 25, 25, 500, width=2)  # y-axis
-            canvas.create_line(25, 500, 1000, 500, width=2)  # x-axis
-
+        self.dict = {}
 
 
 
 
     def run(self):
         self.app.mainloop()
-        return(self.i,self.dict)
+        return(self.dict)
 
 
 
