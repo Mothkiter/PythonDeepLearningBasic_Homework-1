@@ -123,7 +123,7 @@ def get_pig_crtic(year, month, day): #get critic about price
 
     text = bs_critic.find_all('p')
     return {
-        '评论': text[day-1].text
+        '评论': text[len(text)-day].text
     }
 
 
