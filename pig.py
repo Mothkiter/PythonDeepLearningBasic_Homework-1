@@ -1,14 +1,8 @@
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tkinter import simpledialog
 import tkinter as tk
 import requests
 from bs4 import BeautifulSoup
 import json
-from PIL import Image, ImageTk
-
-
-
 
 
 def get_pig_info_1( year=2022, month=1): #data form agriculture minister
@@ -41,8 +35,6 @@ def get_pig_info_1( year=2022, month=1): #data form agriculture minister
                 l_2.append(td.text.strip())
 
     return {'名称': l_name, '数值': l_num, '环比': l_1, '同比': l_2} 
-
-    
 
 
 def get_pig_info_2(area='全国'): #datd form a web about pork price
@@ -93,10 +85,6 @@ def get_pig_info_2(area='全国'): #datd form a web about pork price
     return info_1(),info_2()
 
 
-
-
-
-
 def get_pig_crtic(year, month, day): #get critic about price
     day = int(day)
     if int(month) < 1 or int(month) > 12:
@@ -139,8 +127,6 @@ def get_pig_crtic(year, month, day): #get critic about price
     }
 
 
-
-
 def get_pig_info_change(id=1, t=7): #获得猪肉以及饲料价格走势图
     if int(id) in [1,3,4] :
         url = 'https://hqb.nxin.com/hqb/chq.shtml?type=0&date=0&queryPriceVo.goodsId='+str(id)+'&queryPriceVo.areaId=10393&queryPriceVo.whatTime='+str(365)
@@ -180,10 +166,6 @@ def get_pig_info_change(id=1, t=7): #获得猪肉以及饲料价格走势图
                 l_num.append(dict_obj['pig'][0]['data1'][i])
 
     return {'name':l_name,'num':l_num,'id':id,'t':t}
-
-
-
-
 
 # 运行应用程序
 class MyApp_main:
@@ -290,7 +272,7 @@ class MyApp_main:
         for key in self.dict:
             name = key
             break
-        text_label = tk.Label(new_window, text=self.dict[name])
+        text_label = tk.Label(new_window, text=self.dict[name], font=('Arial', 13), wraplength=900, pady=5)
         text_label.pack()
 
         self.dict = {}
@@ -357,8 +339,6 @@ class MyApp_main:
         canvas.create_line(25, 500, 1000, 500, width=2)  # x-axis
 
         self.dict = {}
-
-
 
 
     def run(self):
