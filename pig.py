@@ -18,10 +18,10 @@ def get_pig_info_1( year=2022, month=1): #data form agriculture minister
     bs_MA = BeautifulSoup(response_MA.content, "lxml")
     
     i = -1
-    l_name = []
-    l_num = []
-    l_1 = []
-    l_2 = []
+    l_name = [] #name 
+    l_num = [] #number
+    l_1 = [] #Year to Year
+    l_2 = [] #Month to Month
     for table in bs_MA.select('table.data_table_mobile.pcNone'):
         for td in table.select('td.right_data'):
             i = i + 1
@@ -51,7 +51,7 @@ def get_pig_info_2(area='全国'): #datd form a web about pork price
     response_ZW = requests.get(url_ZW)
     bs_ZW = BeautifulSoup(response_ZW.content,"html.parser")
 
-    def info_1():
+    def info_1():#get today data 
         node = bs_ZW.find("ul", class_="zhujia-hd clear")
         name = node.select('img')
         data = node.select('b',class_ = "green")
@@ -66,7 +66,7 @@ def get_pig_info_2(area='全国'): #datd form a web about pork price
         return({'项目':l_name,'数据':l_num})
 
 
-    def info_2():
+    def info_2():#get data last year
         node = bs_ZW.find("ul", class_="live-hogs clear")
         name = node.select('li')
 
@@ -127,7 +127,7 @@ def get_pig_crtic(year, month, day): #get critic about price
     }
 
 
-def get_pig_info_change(id=1, t=7): #获得猪肉以及饲料价格走势图
+def get_pig_info_change(id=1, t=7): #get the price fluctuations curve
     if int(id) in [1,3,4] :
         url = 'https://hqb.nxin.com/hqb/chq.shtml?type=0&date=0&queryPriceVo.goodsId='+str(id)+'&queryPriceVo.areaId=10393&queryPriceVo.whatTime='+str(365)
     else:
@@ -141,33 +141,38 @@ def get_pig_info_change(id=1, t=7): #获得猪肉以及饲料价格走势图
     dict_obj = json.loads(bs_change.p.text.encode('utf-8-sig'))
 
     l_num = []
-    l_name = []
+    l_time = []
     
     num = len(dict_obj['pig'][0]['data1'])
-    if t<=num:
-        l_name = dict_obj['pig'][0]['date'][num-t:num]
+
+    #there are 2 list of datd, data1 consist of data of this year, data2 is about last whole year; and within these list,element can be float or dict
+
+    if t<=num: #we only need this year's datd
+        l_time = dict_obj['pig'][0]['date'][num-t:num]
         for i in range(num-t,num):
             if type(dict_obj['pig'][0]['data1'][i])==dict:
                 l_num.append(dict_obj['pig'][0]['data1'][i]['y'])
             else:       
                 l_num.append(dict_obj['pig'][0]['data1'][i])
 
-    else:
-        l_name = dict_obj['pig'][0]['date'][num+365-t:365]+dict_obj['pig'][0]['date'][0:num]
+    else: #we need part of last year's data
+        l_time = dict_obj['pig'][0]['date'][num+365-t:365]+dict_obj['pig'][0]['date'][0:num]
+        #last year
         for i in range(num+365-t,365):
             if type(dict_obj['pig'][0]['data2'][i])==dict:
                 l_num.append(dict_obj['pig'][0]['data2'][i]['y'])
             else:       
                 l_num.append(dict_obj['pig'][0]['data2'][i])
+        #this year
         for i in range(0,num):
             if type(dict_obj['pig'][0]['data1'][i])==dict:
                 l_num.append(dict_obj['pig'][0]['data1'][i]['y'])
             else:       
                 l_num.append(dict_obj['pig'][0]['data1'][i])
 
-    return {'name':l_name,'num':l_num,'id':id,'t':t}
+    return {'time':l_time,'num':l_num,'id':id,'t':t}
 
-# 运行应用程序
+# run app
 class MyApp_main:
     def __init__(self):
         self.app = tk.Tk()#create the beginning page
@@ -197,7 +202,7 @@ class MyApp_main:
         if input_str:
             input_list = input_str.split(',')
             if len(input_list) == 1:
-                input_list = l=input_list[0].split(' ')
+                input_list = input_list[0].split(' ')
             self.dict = get_pig_info_1(*input_list)
         new_window = tk.Toplevel()
         # create a table with dict
@@ -222,7 +227,7 @@ class MyApp_main:
         if input_str:
             input_list = input_str.split(',')
             if len(input_list) == 1:
-                input_list = l=input_list[0].split(' ')
+                input_list = input_list[0].split(' ')
             self.dict,self.dict2 = get_pig_info_2(*input_list)
         new_window = tk.Toplevel()
 
@@ -265,7 +270,7 @@ class MyApp_main:
         if input_str:
             input_list = input_str.split(',')
             if len(input_list) == 1:
-                input_list = l=input_list[0].split(' ')
+                input_list = input_list[0].split(' ')
             self.dict = get_pig_crtic(*input_list)
         new_window = tk.Toplevel()
         # show the critic
@@ -283,14 +288,14 @@ class MyApp_main:
         if input_str:
             input_list = input_str.split(',')
             if len(input_list) == 1:
-                input_list = l=input_list[0].split(' ')
+                input_list = input_list[0].split(' ')
             self.dict = get_pig_info_change(*input_list)
         new_window = tk.Toplevel()
         # draw a pic to show the change of price
         canvas = tk.Canvas(new_window, width=1020, height=520)
         canvas.pack()
         data = self.dict['num']
-        day = self.dict['name']
+        day = self.dict['time']
         #set name and unit
         if int(self.dict['id']) == 1:
             unit = '元/公斤'
